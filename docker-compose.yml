@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  payments-api:
+    container_name: payments-api
+    restart: always
+    build: .
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/payments
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 50
+    networks:
+      - app-network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 50
+    networks:
+      - app-network
+
+  mongodb:
+    container_name: mongodb
+    image: mvertes/alpine-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/var/lib/mongodb
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "mongo --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 30s
+      timeout: 10s
+      retries: 50
+
+volumes:
+   db:
+
+networks:
+  app-network:
+    external: true
