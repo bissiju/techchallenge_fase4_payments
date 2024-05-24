@@ -17,3 +17,19 @@ jobs:
         node-version: '18'
     - run: npm install
     - run: npm test
+
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v1
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
+            -Dsonar.sources=.
+            -Dsonar.host.url=https://sonarcloud.io
+          token: ${{ secrets.SONAR_TOKEN }}
